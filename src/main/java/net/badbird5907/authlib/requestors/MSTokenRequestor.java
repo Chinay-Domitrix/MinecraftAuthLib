@@ -18,7 +18,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class MSTokenRequestor {
-    public static TokenPair getFor(String authCode) throws IOException, AuthenticationException {
+    public static TokenPair getFor(String authCode) throws IOException {
         try {
             Map<String, String> arguments = new HashMap<>();
             arguments.put("client_id", MinecraftAuthLib.CLIENT_ID);
@@ -56,7 +56,7 @@ public class MSTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error")) {
-                throw new AuthenticationException(json.getString("error") + ": " + json.getString("error_description"));
+                return null;
             }
             return new TokenPair(json.getString("access_token"), json.getString("refresh_token"));
         } catch (IOException e) {
@@ -65,7 +65,7 @@ public class MSTokenRequestor {
         }
     }
 
-    public static TokenPair getForUserPass(String authCode) throws IOException, AuthenticationException {
+    public static TokenPair getForUserPass(String authCode) throws IOException {
         try {
             Map<String, String> arguments = new HashMap<>();
             arguments.put("client_id", "00000000402b5328");
@@ -104,7 +104,7 @@ public class MSTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error")) {
-                throw new AuthenticationException(json.getString("error") + ": " + json.getString("error_description"));
+                return null;
             }
             return new TokenPair(json.getString("access_token"), json.getString("refresh_token"));
         } catch (IOException e) {
@@ -114,7 +114,7 @@ public class MSTokenRequestor {
     }
 
 
-    public static TokenPair refreshFor(String code) throws AuthenticationException, IOException {
+    public static TokenPair refreshFor(String code) throws IOException {
         try {
             Map<String, String> arguments = new HashMap<>();
             arguments.put("client_id", MinecraftAuthLib.CLIENT_ID);
@@ -153,7 +153,7 @@ public class MSTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error")) {
-                throw new AuthenticationException(json.getString("error") + ": " + json.getString("error_description"));
+                return null;
             }
             return new TokenPair(json.getString("access_token"), json.getString("refresh_token"));
         } catch (IOException e) {

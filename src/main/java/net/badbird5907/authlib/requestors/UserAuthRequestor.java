@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class UserAuthRequestor {
-    public static String getTokenFor(String u, String p) throws AuthenticationException {
+    public static String getTokenFor(String u, String p) {
         String cookie = "";
         String PPFT = "";
         String urlPost = "";
@@ -29,22 +29,22 @@ public class UserAuthRequestor {
                 if (m.find()) {
                     PPFT = m.group(1);
                 } else {
-                    throw new AuthenticationException("U/P Auth error: Unable to parse response! [1]");
+                    return null;
                 }
 
                 m = Pattern.compile("urlPost:[ ]?'(.+?(?='))").matcher(body);
                 if (m.find()) {
                     urlPost = m.group(1);
                 } else {
-                    throw new AuthenticationException("U/P Auth error: Unable to parse response! [2]");
+                    return null;
                 }
             }
         } catch (IOException e) {
-            throw new AuthenticationException("U/P Auth error: generic IO error");
+            return null;
         }
 
         if (cookie.isEmpty() || PPFT.isEmpty() || urlPost.isEmpty()) {
-            throw new AuthenticationException("U/P Auth error: Invalid response, missing one or more of cookie, PPFT or urlPost");
+            return null;
         }
 
         Map<String, String> map = new HashMap<>();
@@ -75,18 +75,18 @@ public class UserAuthRequestor {
             }
 
             if (connection.getResponseCode() != 200 || connection.getURL().toString().equals(urlPost)) {
-                throw new AuthenticationException("Invalid username and/or password");
+                return null;
             }
 
             Matcher m = Pattern.compile("[?|&]code=([\\w.-]+)").matcher(URLDecoder.decode(connection.getURL().toString(), StandardCharsets.UTF_8.name()));
             if (m.find()) {
                 code = m.group(1);
             } else {
-                throw new AuthenticationException("U/P Phase 2: Could not parse response of '" + urlPost + "'.");
+                return null;
             }
         } catch (IOException e) {
             e.printStackTrace();
-            throw new AuthenticationException("U/P Phase 2:  Could not make request!");
+            return null;
         }
 
         return code;

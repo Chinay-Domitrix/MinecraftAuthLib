@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class XSTSTokenRequestor {
-    public static XSTSToken getFor(String token) throws IOException, AuthenticationException {
+    public static XSTSToken getFor(String token) throws IOException {
         try {
             URL url = new URL("https://xsts.auth.xboxlive.com/xsts/authorize");
             URLConnection con = url.openConnection();
@@ -46,7 +46,7 @@ public class XSTSTokenRequestor {
 
             BufferedReader reader;
             if (http.getResponseCode() == 401) {
-                throw new AuthenticationException("xsts_err: User has no XBox Live account, or account is invalid.");
+                return null;
             }
 
             if (http.getResponseCode() != 200) {
@@ -58,7 +58,7 @@ public class XSTSTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error")) {
-                throw new AuthenticationException(json.getString("error") + ": " + json.getString("error_description"));
+                return null;
             }
             String uhs = ((JSONObject)((JSONObject)json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
             return new XSTSToken(json.getString("Token"), uhs);

@@ -50,35 +50,31 @@ public class MinecraftTokenRequestor {
         }
     }
 
-    public static void checkAccount(MinecraftToken minecraftToken) throws AuthenticationException, IOException {
-        try {
-            URL url = new URL("https://api.minecraftservices.com/entitlements/mcstore");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("GET");
+    public static boolean checkAccount(MinecraftToken minecraftToken) throws IOException {
+        URL url = new URL("https://api.minecraftservices.com/entitlements/mcstore");
+        URLConnection con = url.openConnection();
+        HttpURLConnection http = (HttpURLConnection) con;
+        http.setRequestMethod("GET");
 
-            http.setRequestProperty("Authorization", "Bearer "+minecraftToken.accessToken);
-            http.setRequestProperty("Host","api.minecraftservices.com");
-            http.connect();
+        http.setRequestProperty("Authorization", "Bearer "+minecraftToken.accessToken);
+        http.setRequestProperty("Host","api.minecraftservices.com");
+        http.connect();
 
-            BufferedReader reader;
-            if (http.getResponseCode()!=200) {
-                reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
-            } else {
-                reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-            }
-            String lines = reader.lines().collect(Collectors.joining());
-
-            JSONObject json = new JSONObject(lines);
-            if (json.getJSONArray("items").length() == 0)
-                throw new AuthenticationException("User doesn't own Minecraft!");
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
+        BufferedReader reader;
+        if (http.getResponseCode()!=200) {
+            reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+        } else {
+            reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
         }
+        String lines = reader.lines().collect(Collectors.joining());
+
+        JSONObject json = new JSONObject(lines);
+        if (json.getJSONArray("items").length() == 0)
+            return false;
+        return true;
     }
 
-    public static MinecraftProfile getProfile(MinecraftToken minecraftToken) throws AuthenticationException, IOException {
+    public static MinecraftProfile getProfile(MinecraftToken minecraftToken) throws IOException {
         try {
             URL url = new URL("https://api.minecraftservices.com/minecraft/profile");
             URLConnection con = url.openConnection();
@@ -99,7 +95,7 @@ public class MinecraftTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error"))
-                throw new AuthenticationException("Error retrieving profile: "+json.getString("errorMessage"));
+                return null;
 
             String skinURL = json.getJSONArray("skins").getJSONObject(0).getString("url");
             return new MinecraftProfile(json.getString("id"), json.getString("name"), skinURL);

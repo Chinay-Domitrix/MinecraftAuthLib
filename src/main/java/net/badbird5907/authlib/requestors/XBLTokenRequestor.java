@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class XBLTokenRequestor {
-    public static XBLToken getFor(String token) throws IOException, AuthenticationException {
+    public static XBLToken getFor(String token) throws IOException {
         try {
             URL url = new URL("https://user.auth.xboxlive.com/user/authenticate");
             URLConnection con = url.openConnection();
@@ -54,7 +54,7 @@ public class XBLTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error")) {
-                throw new AuthenticationException(json.getString("error") + ": " + json.getString("error_description"));
+                return null;
             }
             String uhs = ((JSONObject)((JSONObject)json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
             return new XBLToken(json.getString("Token"), uhs);
@@ -64,7 +64,7 @@ public class XBLTokenRequestor {
         }
     }
 
-    public static XBLToken getForUserPass(String token) throws IOException, AuthenticationException {
+    public static XBLToken getForUserPass(String token) throws IOException {
         try {
             URL url = new URL("https://user.auth.xboxlive.com/user/authenticate");
             URLConnection con = url.openConnection();
@@ -103,7 +103,7 @@ public class XBLTokenRequestor {
 
             JSONObject json = new JSONObject(lines);
             if (json.keySet().contains("error")) {
-                throw new AuthenticationException(json.getString("error") + ": " + json.getString("error_description"));
+                return null;
             }
             String uhs = ((JSONObject)((JSONObject)json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
             return new XBLToken(json.getString("Token"), uhs);
