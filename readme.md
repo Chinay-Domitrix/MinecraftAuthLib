@@ -20,6 +20,7 @@ public class MyClass {
     }
 } 
 ```
+Note: `UserPassHandler.handle` will return null if something goes wrong in the authentication process
 ## Azure (REQUIRED)
 You'll need an Azure account to do this step. </br>
 1. Go to [Azure App Registrations](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps)
