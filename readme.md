@@ -20,3 +20,6 @@ public class MyClass {
     }
 } 
 ```
+## Azure (REQUIRED)
+You'll need an Azure account to do this step. </br>
+Go to [Azure App Registrations](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps)
