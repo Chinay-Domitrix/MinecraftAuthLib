@@ -11,17 +11,11 @@ import java.util.UUID;
 @Getter
 @Setter
 public class AuthResponse {
-    private final String accessToken,refreshToken,name,skinURL;
-    private final UUID uuid;
+	private final String accessToken, refreshToken, name, skinURL;
+	private final UUID uuid;
 
-    @Override
-    public String toString() {
-        return "AuthResponse{" +
-                "accessToken='" + accessToken + '\'' +
-                ", refreshToken='" + refreshToken + '\'' +
-                ", name='" + name + '\'' +
-                ", skinURL='" + skinURL + '\'' +
-                ", uuid=" + uuid +
-                '}';
-    }
+	@Override
+	public String toString() {
+		return "AuthResponse{accessToken=\'" + accessToken + "\', refreshToken=\'" + refreshToken + "\', name='" + name + "\', skinURL=\'" + skinURL + "\', uuid=" + uuid + "}";
+	}
 }
