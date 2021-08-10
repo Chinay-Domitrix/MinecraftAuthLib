@@ -13,115 +13,94 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class MinecraftTokenRequestor {
-    public static MinecraftToken getFor(XSTSTokenRequestor.XSTSToken xstsToken) throws IOException {
-        try {
-            URL url = new URL("https://api.minecraftservices.com/authentication/login_with_xbox");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("POST"); // PUT is another valid option
-            http.setDoOutput(true);
+	public static MinecraftToken getFor(XSTSTokenRequestor.XSTSToken xstsToken) throws IOException {
+		try {
+			URL url = new URL("https://api.minecraftservices.com/authentication/login_with_xbox");
+			URLConnection con = url.openConnection();
+			HttpURLConnection http = (HttpURLConnection) con;
+			http.setRequestMethod("POST"); // PUT is another valid option
+			http.setDoOutput(true);
+			JSONObject request = new JSONObject();
+			request.put("identityToken", "XBL3.0 x=" + xstsToken.uhs+ ";" + xstsToken.token);
+			String body = request.toString();
+			http.setFixedLengthStreamingMode(body.length());
+			http.setRequestProperty("Content-Type", "application/json");
+			http.setRequestProperty("Host", "api.minecraftservices.com");
+			http.connect();
+			try (OutputStream os = http.getOutputStream()) {
+				os.write(body.getBytes(StandardCharsets.US_ASCII));
+			}
+			BufferedReader reader;
+			if (http.getResponseCode() != 200) reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+			else reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+			String lines = reader.lines().collect(Collectors.joining());
+			JSONObject json = new JSONObject(lines);
+			return new MinecraftToken(json.getString("access_token"), json.getString("username"));
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
 
-            JSONObject request = new JSONObject();
-            request.put("identityToken","XBL3.0 x="+xstsToken.uhs+";"+xstsToken.token);
+	public static boolean checkAccount(MinecraftToken minecraftToken) throws IOException {
+		URL url = new URL("https://api.minecraftservices.com/entitlements/mcstore");
+		URLConnection con = url.openConnection();
+		HttpURLConnection http = (HttpURLConnection) con;
+		http.setRequestMethod("GET");
+		http.setRequestProperty("Authorization", "Bearer "+minecraftToken.accessToken);
+		http.setRequestProperty("Host", "api.minecraftservices.com");
+		http.connect();
+		BufferedReader reader;
+		if (http.getResponseCode() != 200) reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+		else reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+		String lines = reader.lines().collect(Collectors.joining());
+		JSONObject json = new JSONObject(lines);
+		if (json.getJSONArray("items").length() == 0) return false;
+		return true;
+	}
 
-            String body = request.toString();
+	public static MinecraftProfile getProfile(MinecraftToken minecraftToken) throws IOException {
+		try {
+			URL url = new URL("https://api.minecraftservices.com/minecraft/profile");
+			URLConnection con = url.openConnection();
+			HttpURLConnection http = (HttpURLConnection) con;
+			http.setRequestMethod("GET");
+			http.setRequestProperty("Authorization", "Bearer " + minecraftToken.accessToken);
+			http.setRequestProperty("Host", "api.minecraftservices.com");
+			http.connect();
+			BufferedReader reader;
+			if (http.getResponseCode() != 200) reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+			else reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+			String lines = reader.lines().collect(Collectors.joining());
+			JSONObject json = new JSONObject(lines);
+			if (json.keySet().contains("error")) return null;
+			String skinURL = json.getJSONArray("skins").getJSONObject(0).getString("url");
+			return new MinecraftProfile(json.getString("id"), json.getString("name"), skinURL);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
 
-            http.setFixedLengthStreamingMode(body.length());
-            http.setRequestProperty("Content-Type", "application/json");
-            http.setRequestProperty("Host","api.minecraftservices.com");
-            http.connect();
-            try (OutputStream os = http.getOutputStream()) {
-                os.write(body.getBytes(StandardCharsets.US_ASCII));
-            }
+	public static class MinecraftToken {
+		public String accessToken;
+		public String username;
 
-            BufferedReader reader;
-            if (http.getResponseCode() != 200) {
-                reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
-            } else {
-                reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-            }
-            String lines = reader.lines().collect(Collectors.joining());
+		public MinecraftToken(String a, String b) {
+			accessToken = a;
+			username = b;
+		}
+	}
 
-            JSONObject json = new JSONObject(lines);
-            return new MinecraftToken(json.getString("access_token"), json.getString("username"));
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
+	public static class MinecraftProfile {
+		public String uuid;
+		public String name;
+		public String skinURL;
 
-    public static boolean checkAccount(MinecraftToken minecraftToken) throws IOException {
-        URL url = new URL("https://api.minecraftservices.com/entitlements/mcstore");
-        URLConnection con = url.openConnection();
-        HttpURLConnection http = (HttpURLConnection) con;
-        http.setRequestMethod("GET");
-
-        http.setRequestProperty("Authorization", "Bearer "+minecraftToken.accessToken);
-        http.setRequestProperty("Host","api.minecraftservices.com");
-        http.connect();
-
-        BufferedReader reader;
-        if (http.getResponseCode()!=200) {
-            reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
-        } else {
-            reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-        }
-        String lines = reader.lines().collect(Collectors.joining());
-
-        JSONObject json = new JSONObject(lines);
-        if (json.getJSONArray("items").length() == 0)
-            return false;
-        return true;
-    }
-
-    public static MinecraftProfile getProfile(MinecraftToken minecraftToken) throws IOException {
-        try {
-            URL url = new URL("https://api.minecraftservices.com/minecraft/profile");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("GET");
-
-            http.setRequestProperty("Authorization", "Bearer "+minecraftToken.accessToken);
-            http.setRequestProperty("Host","api.minecraftservices.com");
-            http.connect();
-
-            BufferedReader reader;
-            if (http.getResponseCode()!=200) {
-                reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
-            } else {
-                reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-            }
-            String lines = reader.lines().collect(Collectors.joining());
-
-            JSONObject json = new JSONObject(lines);
-            if (json.keySet().contains("error"))
-                return null;
-
-            String skinURL = json.getJSONArray("skins").getJSONObject(0).getString("url");
-            return new MinecraftProfile(json.getString("id"), json.getString("name"), skinURL);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    public static class MinecraftToken {
-        public String accessToken;
-        public String username;
-        public MinecraftToken(String a, String b) {
-            accessToken=a;
-            username=b;
-        }
-    }
-
-    public static class MinecraftProfile {
-        public String uuid;
-        public String name;
-        public String skinURL;
-        public MinecraftProfile(String a, String b, String c){
-            uuid=a;
-            name=b;
-            skinURL=c;
-        }
-    }
+		public MinecraftProfile(String a, String b, String c) {
+			uuid = a;
+			name = b;
+			skinURL = c;
+		}
+	}
 }
