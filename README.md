@@ -2,22 +2,21 @@
 Note: I haven't fully tested this, this is a fork of [Minecraft_MSAuth](https://github.com/charlie353535/Minecraft_MSAuth/)
 
 Usage:
-
 ```java
 import net.badbird5907.authlib.MinecraftAuthLib;
 import net.badbird5907.authlib.handlers.UserPassHandler;
 import net.badbird5907.authlib.object.AuthResponse;
 
 public class MyClass {
-    public static void main(String[] args) {
-        MinecraftAuthLib.setup("CLIENT_ID", "CLIENT_SECRET");
-        AuthResponse response = UserPassHandler.handle("name@email.com","verysecurepassword123");
-        String accessToken = response.getAccessToken();
-        String refreshToken = response.getRefreshToken();
-        String name = response.getName();
-        String skinURL = response.getSkinURL();
-        UUID uuid = response.getUuid();
-    }
+	public static void main(String[] args) {
+		MinecraftAuthLib.setup("CLIENT_ID", "CLIENT_SECRET");
+		AuthResponse response = UserPassHandler.handle("name@email.com","verysecurepassword123");
+		String accessToken = response.getAccessToken();
+		String refreshToken = response.getRefreshToken();
+		String name = response.getName();
+		String skinURL = response.getSkinURL();
+		UUID uuid = response.getUuid();
+	}
 } 
 ```
 Note: `UserPassHandler.handle` will return null if something goes wrong in the authentication process
@@ -32,4 +31,3 @@ You'll need an Azure account to do this step. </br>
 7. Then enter the description and set the expiry to 24 months. ![image](https://user-images.githubusercontent.com/50347938/128093378-efb0b1e6-ca96-4645-b2f6-001d732694ac.png)
 8. Then, the "Secret ID" is your CLIENT_SECRET. ![image](https://user-images.githubusercontent.com/50347938/128093474-54753299-c203-4618-a8ab-b2d8df3b3b5a.png)
 (see above examples on how to use the CLIENT_ID and CLIENT_SECRET)
-
