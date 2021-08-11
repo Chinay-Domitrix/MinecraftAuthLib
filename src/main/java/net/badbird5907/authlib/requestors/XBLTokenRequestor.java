@@ -13,112 +13,87 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class XBLTokenRequestor {
-    public static XBLToken getFor(String token) throws IOException {
-        try {
-            URL url = new URL("https://user.auth.xboxlive.com/user/authenticate");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("POST");
-            http.setDoOutput(true);
+	public static XBLToken getFor(String token) throws IOException {
+		try {
+			URL url = new URL("https://user.auth.xboxlive.com/user/authenticate");
+			URLConnection con = url.openConnection();
+			HttpURLConnection http = (HttpURLConnection) con;
+			http.setRequestMethod("POST");
+			http.setDoOutput(true);
+			JSONObject request = new JSONObject();
+			request.put("RelyingParty", "http://auth.xboxlive.com");
+			request.put("TokenType", "JWT");
+			JSONObject props = new JSONObject();
+			props.put("AuthMethod", "RPS");
+			props.put("SiteName", "user.auth.xboxlive.com");
+			props.put("RpsTicket", "d=" + token);
+			request.put("Properties", props);
+			String body = request.toString();
+			http.setFixedLengthStreamingMode(body.length());
+			http.setRequestProperty("Content-Type", "application/json");
+			http.setRequestProperty("Accept", "application/json");
+			http.connect();
+			try (OutputStream os = http.getOutputStream()) {
+				os.write(body.getBytes(StandardCharsets.US_ASCII));
+			}
+			BufferedReader reader;
+			System.out.println(http.getHeaderFields());
+			if (http.getResponseCode() != 200) reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+			else reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+			String lines = reader.lines().collect(Collectors.joining());
+			JSONObject json = new JSONObject(lines);
+			if (json.keySet().contains("error")) return null;
+			String uhs = ((JSONObject) ((JSONObject) json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
+			return new XBLToken(json.getString("Token"), uhs);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
 
-            JSONObject request = new JSONObject();
-            request.put("RelyingParty","http://auth.xboxlive.com");
-            request.put("TokenType","JWT");
+	public static XBLToken getForUserPass(String token) throws IOException {
+		try {
+			URL url = new URL("https://user.auth.xboxlive.com/user/authenticate");
+			URLConnection con = url.openConnection();
+			HttpURLConnection http = (HttpURLConnection) con;
+			http.setDoOutput(true);
+			JSONObject request = new JSONObject();
+			request.put("RelyingParty", "http://auth.xboxlive.com");
+			request.put("TokenType", "JWT");
+			JSONObject props = new JSONObject();
+			props.put("AuthMethod", "RPS");
+			props.put("SiteName", "user.auth.xboxlive.com");
+			props.put("RpsTicket", token);
+			request.put("Properties", props);
+			String body = request.toString();
+			http.setFixedLengthStreamingMode(body.length());
+			http.setRequestProperty("Content-Type", "application/json");
+			http.setRequestProperty("Accept", "application/json");
+			http.connect();
+			try (OutputStream os = http.getOutputStream()) {
+				os.write(body.getBytes(StandardCharsets.US_ASCII));
+			}
+			BufferedReader reader;
+			if (http.getResponseCode() != 200) reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+			else reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+			String lines = reader.lines().collect(Collectors.joining());
+			JSONObject json = new JSONObject(lines);
+			if (json.keySet().contains("error")) return null;
+			String uhs = ((JSONObject) ((JSONObject) json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
+			return new XBLToken(json.getString("Token"), uhs);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
 
-            JSONObject props = new JSONObject();
-            props.put("AuthMethod","RPS");
-            props.put("SiteName","user.auth.xboxlive.com");
-            props.put("RpsTicket","d="+token);
+	public static class XBLToken {
+		public String token;
+		public String uhs;
 
-            request.put("Properties", props);
-
-            String body = request.toString();
-
-            http.setFixedLengthStreamingMode(body.length());
-            http.setRequestProperty("Content-Type", "application/json");
-            http.setRequestProperty("Accept","application/json");
-            http.connect();
-            try (OutputStream os = http.getOutputStream()) {
-                os.write(body.getBytes(StandardCharsets.US_ASCII));
-            }
-
-            BufferedReader reader;
-            System.out.println(http.getHeaderFields());
-
-            if (http.getResponseCode() != 200) {
-                reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
-            } else {
-                reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-            }
-            String lines = reader.lines().collect(Collectors.joining());
-
-            JSONObject json = new JSONObject(lines);
-            if (json.keySet().contains("error")) {
-                return null;
-            }
-            String uhs = ((JSONObject)((JSONObject)json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
-            return new XBLToken(json.getString("Token"), uhs);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    public static XBLToken getForUserPass(String token) throws IOException {
-        try {
-            URL url = new URL("https://user.auth.xboxlive.com/user/authenticate");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setDoOutput(true);
-
-            JSONObject request = new JSONObject();
-            request.put("RelyingParty","http://auth.xboxlive.com");
-            request.put("TokenType","JWT");
-
-            JSONObject props = new JSONObject();
-            props.put("AuthMethod","RPS");
-            props.put("SiteName","user.auth.xboxlive.com");
-            props.put("RpsTicket",token);
-
-            request.put("Properties", props);
-
-            String body = request.toString();
-
-            http.setFixedLengthStreamingMode(body.length());
-            http.setRequestProperty("Content-Type", "application/json");
-            http.setRequestProperty("Accept","application/json");
-            http.connect();
-            try (OutputStream os = http.getOutputStream()) {
-                os.write(body.getBytes(StandardCharsets.US_ASCII));
-            }
-
-            BufferedReader reader;
-
-            if (http.getResponseCode() != 200) {
-                reader = new BufferedReader(new InputStreamReader(http.getErrorStream()));
-            } else {
-                reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-            }
-            String lines = reader.lines().collect(Collectors.joining());
-
-            JSONObject json = new JSONObject(lines);
-            if (json.keySet().contains("error")) {
-                return null;
-            }
-            String uhs = ((JSONObject)((JSONObject)json.get("DisplayClaims")).getJSONArray("xui").get(0)).getString("uhs");
-            return new XBLToken(json.getString("Token"), uhs);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    public static class XBLToken {
-        public String token;
-        public String uhs;
-        public XBLToken(String t, String u) {
-            token=t;
-            uhs=u;
-        }
-    }
+		public XBLToken(String t, String u) {
+			token = t;
+			uhs = u;
+		}
+	}
 }
